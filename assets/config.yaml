@@ -1,0 +1,5 @@
+url: http://clubnuestra.com.ar
+title: 'Club Nuestra'
+app_bar:
+  visible: true
+  color: '#7e57c2'

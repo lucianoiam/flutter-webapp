@@ -13,6 +13,7 @@ environment:
   sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
+  yaml: ^2.1.15
   flutter_webview_plugin: ^0.3.0+2
   flutter:
     sdk: flutter
@@ -32,6 +33,9 @@ dev_dependencies:
 # The following section is specific to Flutter.
 flutter:
 
+  assets:
+    - assets/config.yaml
+  
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
