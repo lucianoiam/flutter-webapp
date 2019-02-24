@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
+import 'package:geolocator/geolocator.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
@@ -23,12 +24,17 @@ class WebApp extends StatelessWidget {
           final color = HexColor(config['app_bar']['color']);
           themeData = ThemeData(primaryColor: color);
         }
+        if (config['geolocation']) {
+          // Use geolocator plugin to trigger native permission request on Android
+          Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+        }
         // Build application
         return MaterialApp(
           title: title,
           theme: themeData,
           home: WebviewScaffold(
             url: url,
+            geolocationEnabled: true,
             appBar: appBar,
             hidden: true
           )
