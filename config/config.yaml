@@ -1,0 +1,8 @@
+url: https://wordpress.org
+title: Empty app
+geolocation: true
+notifications: true
+fcm_topic: main
+app_bar:
+  visible: true
+  color: 7e57c2

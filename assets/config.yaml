@@ -1,7 +1,0 @@
-url: http://clubnuestra.com.ar
-url_debug: https://www.google.com/maps/
-title: Club Nuestra
-geolocation: true
-app_bar:
-  visible: false
-  color: 7e57c2

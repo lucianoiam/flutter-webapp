@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Luciano Iam <lucianito@gmail.com>
+ * Copyright 2019 Luciano Iam <lucianito@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
 
 class WebApp extends StatelessWidget {
-  // This widget is the root of your application.
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+
   @override
   Widget build(BuildContext context) {
     // Load configuration
@@ -34,16 +36,27 @@ class WebApp extends StatelessWidget {
         final config = loadYaml(snapshot.data);
         final url = config['url'];
         final title = config['title'];
+
+        // Setup app bar
         var appBar, themeData;
-        if (config['app_bar']['visible']) {
+        if (config['app_bar'] != null && config['app_bar']['visible']) {
           appBar = AppBar(title: Text(title));
-          final color = HexColor(config['app_bar']['color']);
-          themeData = ThemeData(primaryColor: color);
+          final color = config['app_bar']['color'];
+          if (color != null) {
+            themeData = ThemeData(primaryColor: HexColor(color));
+          }
         }
+
+        // Setup notifications
+        if (config['notifications']) {
+          enableNotifications(config);
+        }
+
+        // Trigger native geolocation permission request if needed
         if (config['geolocation']) {
-          // Use geolocator plugin to trigger native permission request
           Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
         }
+
         // Build application
         return MaterialApp(
           title: title,
@@ -57,5 +70,25 @@ class WebApp extends StatelessWidget {
         );
       }            
     );
+  }
+
+  void enableNotifications(config) {
+    // Request notifications permission on iOS
+    _firebaseMessaging.requestNotificationPermissions();
+    _firebaseMessaging.configure( onMessage: (Map<String, dynamic> msg) {
+      print("FCM MESSAGE: ${(msg)}");  // FIXME
+    });
+
+    // Listen for token updates
+    Stream<String> fcmStream = _firebaseMessaging.onTokenRefresh;
+    fcmStream.listen((token) {
+      print("FCM TOKEN IS: $token");  // FIXME
+    });
+
+    // Optionally subscribe to a FCM topic
+    final fcmTopic = config['fcm_topic'];
+    if (fcmTopic != null) {
+      _firebaseMessaging.subscribeToTopic(fcmTopic);
+    }
   }
 }
