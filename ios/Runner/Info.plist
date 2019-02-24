@@ -46,5 +46,7 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesario para acceder al contenido</string>
 </dict>
 </plist>

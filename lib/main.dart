@@ -27,7 +27,11 @@ class WebApp extends StatelessWidget {
         return MaterialApp(
           title: title,
           theme: themeData,
-          home: WebviewScaffold(url: url, appBar: appBar)
+          home: WebviewScaffold(
+            url: url,
+            appBar: appBar,
+            hidden: true
+          )
         );
       }            
     );

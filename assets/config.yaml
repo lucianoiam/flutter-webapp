@@ -1,5 +1,6 @@
 url: http://clubnuestra.com.ar
-title: 'Club Nuestra'
+url_debug: https://www.google.com/maps/
+title: Club Nuestra
 app_bar:
-  visible: true
-  color: '#7e57c2'
+  visible: false
+  color: 7e57c2

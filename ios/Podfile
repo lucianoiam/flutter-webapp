@@ -33,6 +33,8 @@ def parse_KV_file(file, separator='=')
 end
 
 target 'Runner' do
+  # https://github.com/flutter/flutter/issues/16049#issuecomment-382629492
+  use_frameworks!
   # Prepare symlinks folder. We use symlinks to avoid having Podfile.lock
   # referring to absolute paths on developers' machines.
   system('rm -rf .symlinks')
@@ -64,6 +66,8 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
+      # https://github.com/flutter/flutter/issues/16049#issuecomment-382629492
+      config.build_settings['SWIFT_VERSION'] = '4.2' # <--- add this
     end
   end
 end
