@@ -18,7 +18,8 @@ dependencies:
   yaml: ^2.1.15
   geolocator: ^3.0.0
   firebase_messaging: ^4.0.0+1
-  # Missing Geolocation support for Android, use patched version
+  barcode_scan: 1.0.0
+  # WebView lacks geolocation support on Android, use patched version
   #webview_flutter: ^0.3.4
   webview_flutter:
     git:

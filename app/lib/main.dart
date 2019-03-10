@@ -15,11 +15,13 @@
  */
 
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:barcode_scan/barcode_scan.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
@@ -27,7 +29,6 @@ void main() => runApp(WebApp());
 class WebApp extends StatelessWidget {
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
-
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
   @override
@@ -43,7 +44,8 @@ class WebApp extends StatelessWidget {
 
           // Parse configuration
           final config = loadYaml(snapshot.data);
-          final initialUrl = 'https://storage.googleapis.com/flutter-web-app.appspot.com/index.html'; //config['url'];
+          final initialUrl =
+              config['url'] + '?' + Random().nextInt(100).toString();
           final title = config['title'];
 
           // Setup app bar
@@ -58,7 +60,7 @@ class WebApp extends StatelessWidget {
 
           // Setup notifications
           if (config['notifications']) {
-            enableNotifications(config);
+            _enableNotifications(config);
           }
 
           // Trigger native geolocation permission request if needed
@@ -83,23 +85,14 @@ class WebApp extends StatelessWidget {
                         _controller.complete(webViewController);
                       },
                       javascriptChannels: <JavascriptChannel>[
-                        _toasterJavascriptChannel(context),
+                        _nativeJavascriptChannel(context),
                       ].toSet(),
-                      navigationDelegate: (NavigationRequest request) {
-                         if (request.url
-                            .startsWith('https://www.youtube.com/')) {
-                          print('blocking navigation to $request}');
-                          return NavigationDecision.prevent;
-                        }
-                        print('allowing navigation to $request');
-                        return NavigationDecision.navigate;
-                      },
                     );
                   })));
         });
   }
 
-  void enableNotifications(config) {
+  void _enableNotifications(config) {
     // Request notifications permission on iOS
     _firebaseMessaging.requestNotificationPermissions();
     _firebaseMessaging.configure(onMessage: (Map<String, dynamic> msg) {
@@ -119,13 +112,26 @@ class WebApp extends StatelessWidget {
     }
   }
 
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
+  JavascriptChannel _nativeJavascriptChannel(BuildContext context) {
     return JavascriptChannel(
-        name: 'Toaster',
+        name: 'Native',
         onMessageReceived: (JavascriptMessage message) {
-          Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
+          if (message.message == 'scanBarcode') {
+            scanBarcode();
+          }
         });
+  }
+
+  void scanBarcode() async {
+    String js = '';
+    try {
+      String barcode = await BarcodeScanner.scan();
+      js = 'if (typeof onBarcodeReady === "function") onBarcodeReady("' + barcode + '")';
+    } on Exception catch (e) {
+      js = 'if (typeof onBarcodeError === "function") onBarcodeError("' + e.toString() + '")';
+    }
+    _controller.future.then((controller) {
+      controller.evaluateJavascript(js);
+    });
   }
 }

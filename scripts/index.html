@@ -4,8 +4,8 @@
 <title>Flutter webapp test</title>
 <style>
   body {
-    font-family: monaco, monospace;
-    font-size: 30px;
+    font-family: sans-serif;
+    font-size: 20px;
   }
 </style>
 
@@ -14,7 +14,7 @@
     <a href='#' id='test-geo'>Prueba geo</a>
   </p>
   <p>
-    <a href='#' id='test-qr'>Prueba QR</a>
+    <a href='#' id='test-barcode'>Prueba QR</a>
   </p>
   <p>
     <a href='#' id='test-content'>Contenido de prueba</a>
@@ -23,20 +23,34 @@
   <script>
     var debugOutput = document.getElementById('debug-output');
 
-    document.getElementById('test-geo').addEventListener('click', function (e) {
-      navigator.geolocation.getCurrentPosition(function (pos) {
-        var s = 'Lat ' + pos.coords.latitude + ', Long ' + pos.coords.longitude;
-        debugOutput.innerText = s;
+    function scanBarcode() {
+      Native.postMessage('scanBarcode');
+    }
+
+    function onBarcodeReady(data) {
+      debugOutput.innerText = data;
+    }
+
+    function onBarcodeError(message) {
+      debugOutput.innerText = message;
+    }
+
+    (function init() {
+      document.getElementById('test-geo').addEventListener('click', function (e) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          var s = 'Lat ' + pos.coords.latitude + ', Lon ' + pos.coords.longitude;
+          debugOutput.innerText = s;
+        });
       });
-    });
 
-    document.getElementById('test-qr').addEventListener('click', function (e) {
+      document.getElementById('test-barcode').addEventListener('click', function (e) {
+        scanBarcode();
+      });
 
-    });
-
-    document.getElementById('test-content').addEventListener('click', function (e) {
-      window.location = 'https://wordpress.org/about/';
-    });
+      document.getElementById('test-content').addEventListener('click', function (e) {
+        window.location = 'https://wordpress.org/about/';
+      });
+    })();
 
   </script>
 </body>
