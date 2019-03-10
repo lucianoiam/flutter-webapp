@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:yaml/yaml.dart';
@@ -44,8 +43,7 @@ class WebApp extends StatelessWidget {
 
           // Parse configuration
           final config = loadYaml(snapshot.data);
-          final initialUrl =
-              config['url'] + '?' + Random().nextInt(100).toString();
+          final initialUrl = config['url'];
           final title = config['title'];
 
           // Setup app bar
@@ -117,18 +115,22 @@ class WebApp extends StatelessWidget {
         name: 'Native',
         onMessageReceived: (JavascriptMessage message) {
           if (message.message == 'scanBarcode') {
-            scanBarcode();
+            _scanBarcode();
           }
         });
   }
 
-  void scanBarcode() async {
+  void _scanBarcode() async {
     String js = '';
     try {
       String barcode = await BarcodeScanner.scan();
-      js = 'if (typeof onBarcodeReady === "function") onBarcodeReady("' + barcode + '")';
+      js = 'if (typeof onBarcodeReady === "function") onBarcodeReady("' +
+          barcode +
+          '")';
     } on Exception catch (e) {
-      js = 'if (typeof onBarcodeError === "function") onBarcodeError("' + e.toString() + '")';
+      js = 'if (typeof onBarcodeError === "function") onBarcodeError("' +
+          e.toString() +
+          '")';
     }
     _controller.future.then((controller) {
       controller.evaluateJavascript(js);
