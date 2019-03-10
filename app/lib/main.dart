@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -24,66 +25,91 @@ import 'hex_color.dart';
 void main() => runApp(WebApp());
 
 class WebApp extends StatelessWidget {
-  final FlutterWebviewPlugin _webviewPlugin = FlutterWebviewPlugin();
+  final Completer<WebViewController> _controller =
+      Completer<WebViewController>();
+
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
   @override
   Widget build(BuildContext context) {
     // Load configuration
     return FutureBuilder(
-      future: DefaultAssetBundle.of(context).loadString('assets/config.yaml'),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        // Parse configuration
-        final config = loadYaml(snapshot.data);
-        final url = config['url'];
-        final title = config['title'];
-
-        // Setup app bar
-        var appBar, themeData;
-        if (config['app_bar'] != null && config['app_bar']['visible']) {
-          appBar = AppBar(title: Text(title));
-          final color = config['app_bar']['color'];
-          if (color != null) {
-            themeData = ThemeData(primaryColor: HexColor(color));
+        future: DefaultAssetBundle.of(context).loadString('assets/config.yaml'),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.data == null) {
+            // Configuration still not available
+            return Container();
           }
-        }
 
-        // Setup notifications
-        if (config['notifications']) {
-          enableNotifications(config);
-        }
+          // Parse configuration
+          final config = loadYaml(snapshot.data);
+          final initialUrl = 'https://storage.googleapis.com/flutter-web-app.appspot.com/index.html'; //config['url'];
+          final title = config['title'];
 
-        // Trigger native geolocation permission request if needed
-        if (config['geolocation']) {
-          Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
-        }
+          // Setup app bar
+          var appBar, themeData;
+          if (config['app_bar'] != null && config['app_bar']['visible']) {
+            appBar = AppBar(title: Text(title));
+            final color = config['app_bar']['color'];
+            if (color != null) {
+              themeData = ThemeData(primaryColor: HexColor(color));
+            }
+          }
 
-        // Build application
-        return MaterialApp(
-          title: title,
-          theme: themeData,
-          home: WebviewScaffold(
-            url: url,
-            geolocationEnabled: true,
-            appBar: appBar,
-            hidden: true
-          )
-        );
-      }            
-    );
+          // Setup notifications
+          if (config['notifications']) {
+            enableNotifications(config);
+          }
+
+          // Trigger native geolocation permission request if needed
+          if (config['geolocation']) {
+            Geolocator()
+                .getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+          }
+
+          // Build application
+          return MaterialApp(
+              title: title,
+              theme: themeData,
+              home: Scaffold(
+                  appBar: appBar,
+                  // We're using a Builder here so we have a context that is below the Scaffold
+                  // to allow calling Scaffold.of(context) so we can show a snackbar.
+                  body: Builder(builder: (BuildContext context) {
+                    return WebView(
+                      initialUrl: initialUrl,
+                      javascriptMode: JavascriptMode.unrestricted,
+                      onWebViewCreated: (WebViewController webViewController) {
+                        _controller.complete(webViewController);
+                      },
+                      javascriptChannels: <JavascriptChannel>[
+                        _toasterJavascriptChannel(context),
+                      ].toSet(),
+                      navigationDelegate: (NavigationRequest request) {
+                         if (request.url
+                            .startsWith('https://www.youtube.com/')) {
+                          print('blocking navigation to $request}');
+                          return NavigationDecision.prevent;
+                        }
+                        print('allowing navigation to $request');
+                        return NavigationDecision.navigate;
+                      },
+                    );
+                  })));
+        });
   }
 
   void enableNotifications(config) {
     // Request notifications permission on iOS
     _firebaseMessaging.requestNotificationPermissions();
-    _firebaseMessaging.configure( onMessage: (Map<String, dynamic> msg) {
-      print("FCM MESSAGE: ${(msg)}");  // FIXME
+    _firebaseMessaging.configure(onMessage: (Map<String, dynamic> msg) {
+      print("FCM MESSAGE: ${(msg)}"); // FIXME
     });
 
     // Listen for token updates
     Stream<String> fcmStream = _firebaseMessaging.onTokenRefresh;
     fcmStream.listen((token) {
-      print("FCM TOKEN IS: $token");  // FIXME
+      print("FCM TOKEN IS: $token"); // FIXME
     });
 
     // Optionally subscribe to a FCM topic
@@ -93,9 +119,13 @@ class WebApp extends StatelessWidget {
     }
   }
 
-  void subscribeToEvents() {
-    _webviewPlugin.onUrlChanged.listen((String url) {
-      print(url);
-    });
+  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
+    return JavascriptChannel(
+        name: 'Toaster',
+        onMessageReceived: (JavascriptMessage message) {
+          Scaffold.of(context).showSnackBar(
+            SnackBar(content: Text(message.message)),
+          );
+        });
   }
 }

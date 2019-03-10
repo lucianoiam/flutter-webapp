@@ -2,21 +2,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
 <title>Flutter webapp test</title>
+<style>
+  body {
+    font-family: monaco, monospace;
+    font-size: 30px;
+  }
+</style>
 
 <body>
   <p>
-    <a href='#' id='content-test'>Contenido de prueba</a>
+    <a href='#' id='test-geo'>Prueba geo</a>
   </p>
   <p>
-    <a href='#' id='qr-test'>Prueba QR</a>
+    <a href='#' id='test-qr'>Prueba QR</a>
   </p>
+  <p>
+    <a href='#' id='test-content'>Contenido de prueba</a>
+  </p>
+  <pre id='debug-output'></pre>
   <script>
-    document.getElementById('content-test').addEventListener('click', function (e) {
-      window.location = 'https://wordpress.org/about/';
+    var debugOutput = document.getElementById('debug-output');
+
+    document.getElementById('test-geo').addEventListener('click', function (e) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var s = 'Lat ' + pos.coords.latitude + ', Long ' + pos.coords.longitude;
+        debugOutput.innerText = s;
+      });
     });
-    document.getElementById('qr-test').addEventListener('click', function (e) {
+
+    document.getElementById('test-qr').addEventListener('click', function (e) {
 
     });
+
+    document.getElementById('test-content').addEventListener('click', function (e) {
+      window.location = 'https://wordpress.org/about/';
+    });
+
   </script>
 </body>
 

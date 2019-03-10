@@ -18,9 +18,13 @@ dependencies:
   yaml: ^2.1.15
   geolocator: ^3.0.0
   firebase_messaging: ^4.0.0+1
-  flutter_webview_plugin:
+  # Missing Geolocation support for Android, use patched version
+  #webview_flutter: ^0.3.4
+  webview_flutter:
     git:
-      url: https://github.com/iamluciano/flutter_webview_plugin.git
+      url: https://github.com/iamluciano/plugins.git
+      path: packages/webview_flutter
+    #path: ../../flutter-plugins/packages/webview_flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
