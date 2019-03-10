@@ -26,12 +26,13 @@ $notification = [
       'sound'  => 'default'   // no tocar
    ],
    'data'   => [
-      'url' => $n->notification->url
+      'url'          => $n->notification->url,
+		'click_action' => 'FLUTTER_NOTIFICATION_CLICK' // no tocar
    ]
 ];
 
 if (isset($n->registrationId)) {
-   $notification['registration_ids'] = $n->registrationId;
+   $notification['registration_ids'] = [$n->registrationId];
 }
 if (isset($n->topic)) {
    $notification['to'] = '/topics/' . $n->topic;

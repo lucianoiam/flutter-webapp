@@ -29,6 +29,7 @@ result = FCMNotification(api_key=N['apiKey']).notify_single_device(
 	sound='default', # dejar para iOS
 	data_message={
 		'url': N['notification']['url'],
+		'click_action': 'FLUTTER_NOTIFICATION_CLICK' # dejar
 	},
 )
  

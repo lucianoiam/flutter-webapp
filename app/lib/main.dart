@@ -21,20 +21,27 @@ import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:barcode_scan/barcode_scan.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
 
 class WebApp extends StatelessWidget {
+  static const String CONFIG = 'assets/config.yaml';
+
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      new FlutterLocalNotificationsPlugin();
+  final Completer<Map> _config = Completer<Map>();
+  final Completer<String> _fcmToken = Completer<String>();
 
   @override
   Widget build(BuildContext context) {
     // Load configuration
     return FutureBuilder(
-        future: DefaultAssetBundle.of(context).loadString('assets/config.yaml'),
+        future: DefaultAssetBundle.of(context).loadString(CONFIG),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.data == null) {
             // Configuration still not available
@@ -45,6 +52,7 @@ class WebApp extends StatelessWidget {
           final config = loadYaml(snapshot.data);
           final initialUrl = config['url'];
           final title = config['title'];
+          _config.complete(config);
 
           // Setup app bar
           var appBar, themeData;
@@ -93,14 +101,29 @@ class WebApp extends StatelessWidget {
   void _enableNotifications(config) {
     // Request notifications permission on iOS
     _firebaseMessaging.requestNotificationPermissions();
-    _firebaseMessaging.configure(onMessage: (Map<String, dynamic> msg) {
-      print("FCM MESSAGE: ${(msg)}"); // FIXME
-    });
 
-    // Listen for token updates
+    // Listen for messages
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> msg) {
+        print('Got FCM message in foreground ${(msg)}');
+        _handleRemoteMessage(msg, true);
+      },
+      onLaunch: (Map<String, dynamic> msg) {
+        print('Pending FCM message on launch ${(msg)}');
+        _handleRemoteMessage(msg, false);
+      },
+      onResume: (Map<String, dynamic> msg) {
+        print('Pending FCM message on resume ${(msg)}');
+        _handleRemoteMessage(msg, false);
+      },
+    );
+
+    // Listen for FCM token updates
     Stream<String> fcmStream = _firebaseMessaging.onTokenRefresh;
     fcmStream.listen((token) {
-      print("FCM TOKEN IS: $token"); // FIXME
+      print('Got FCM token $token');
+      _fcmToken.complete(token);
+      _invokeFcmTokenCallback();
     });
 
     // Optionally subscribe to a FCM topic
@@ -108,31 +131,82 @@ class WebApp extends StatelessWidget {
     if (fcmTopic != null) {
       _firebaseMessaging.subscribeToTopic(fcmTopic);
     }
+
+    // Setup local notifications
+    var initializationSettings = new InitializationSettings(
+        new AndroidInitializationSettings('ic_notification'),
+        new IOSInitializationSettings());
+    _localNotifications.initialize(initializationSettings,
+        onSelectNotification: (url) {
+      _controller.future.then((controller) {
+        controller.loadUrl(url);
+      });
+    });
   }
+
+  void _handleRemoteMessage(msg, showNotification) {
+    if (!msg.containsKey('notification') ||
+        !msg.containsKey('data') ||
+        !msg['notification'].containsKey('title') ||
+        !msg['notification'].containsKey('body') ||
+        !msg['data'].containsKey('url')) {
+      print('Malformed remote message');
+      return;
+    }
+    final url = msg['data']['url'];
+    if (showNotification) {
+      _config.future.then((config) {
+        var androidDetails = new AndroidNotificationDetails(
+            'main', config['title'], '',
+            importance: Importance.Max, priority: Priority.High);
+        var platformChannelSpecifics = new NotificationDetails(
+            androidDetails, new IOSNotificationDetails());
+        _localNotifications.show(0, msg['notification']['title'],
+            msg['notification']['body'], platformChannelSpecifics,
+            payload: url);
+      });
+    } else {
+      _controller.future.then((controller) {
+        controller.loadUrl(url);
+      });
+    }
+  }
+
+  // Expose native features to JavaScript code
 
   JavascriptChannel _nativeJavascriptChannel(BuildContext context) {
     return JavascriptChannel(
         name: 'Native',
         onMessageReceived: (JavascriptMessage message) {
-          if (message.message == 'scanBarcode') {
-            _scanBarcode();
+          switch (message.message) {
+            case 'fcmToken':
+              _invokeFcmTokenCallback();
+              break;
+            case 'scanBarcode':
+              _scanBarcode();
+              break;
           }
         });
   }
 
   void _scanBarcode() async {
-    String js = '';
     try {
       String barcode = await BarcodeScanner.scan();
-      js = 'if (typeof onBarcodeReady === "function") onBarcodeReady("' +
-          barcode +
-          '")';
+      _invokeJavascriptCallback('onBarcodeData', barcode);
     } on Exception catch (e) {
-      js = 'if (typeof onBarcodeError === "function") onBarcodeError("' +
-          e.toString() +
-          '")';
+      _invokeJavascriptCallback('onBarcodeError', e.toString());
     }
+  }
+
+  void _invokeFcmTokenCallback() {
+    _fcmToken.future.then((token) {
+      _invokeJavascriptCallback('onFcmToken', token);
+    });
+  }
+
+  void _invokeJavascriptCallback(function, arg) {
     _controller.future.then((controller) {
+      String js = 'if (typeof $function === "function") $function("$arg")';
       controller.evaluateJavascript(js);
     });
   }

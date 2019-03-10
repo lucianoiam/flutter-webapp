@@ -11,6 +11,9 @@
 
 <body>
   <p>
+    <a href='#' id='test-token'>Mostrar FCM token</a>
+  </p>
+  <p>
     <a href='#' id='test-geo'>Prueba geo</a>
   </p>
   <p>
@@ -23,28 +26,39 @@
   <script>
     var debugOutput = document.getElementById('debug-output');
 
-    function scanBarcode() {
-      Native.postMessage('scanBarcode');
-    }
+    // Firebase messaging token callback
 
-    function onBarcodeReady(data) {
+    window.onFcmToken = function (token) {
+      debugOutput.innerText = token;
+    };
+
+    // QR scanner callbacks
+
+    window.onBarcodeData = function (data) {
       debugOutput.innerText = data;
-    }
+    };
 
-    function onBarcodeError(message) {
+    window.onBarcodeError = function (message) {
       debugOutput.innerText = message;
-    }
+    };
+
+    // Example implementation
 
     (function init() {
+      document.getElementById('test-token').addEventListener('click', function (e) {
+        Native.postMessage('fcmToken');
+      });
+
       document.getElementById('test-geo').addEventListener('click', function (e) {
         navigator.geolocation.getCurrentPosition(function (pos) {
-          var s = 'Lat ' + pos.coords.latitude + ', Lon ' + pos.coords.longitude;
+          var s = 'Lat ' + pos.coords.latitude + '\n';
+          s += 'Lon ' + pos.coords.longitude;
           debugOutput.innerText = s;
         });
       });
 
       document.getElementById('test-barcode').addEventListener('click', function (e) {
-        scanBarcode();
+        Native.postMessage('scanBarcode');
       });
 
       document.getElementById('test-content').addEventListener('click', function (e) {
