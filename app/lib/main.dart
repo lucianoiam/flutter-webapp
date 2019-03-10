@@ -24,6 +24,7 @@ import 'hex_color.dart';
 void main() => runApp(WebApp());
 
 class WebApp extends StatelessWidget {
+  final FlutterWebviewPlugin _webviewPlugin = FlutterWebviewPlugin();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
   @override
@@ -90,5 +91,11 @@ class WebApp extends StatelessWidget {
     if (fcmTopic != null) {
       _firebaseMessaging.subscribeToTopic(fcmTopic);
     }
+  }
+
+  void subscribeToEvents() {
+    _webviewPlugin.onUrlChanged.listen((String url) {
+      print(url);
+    });
   }
 }
