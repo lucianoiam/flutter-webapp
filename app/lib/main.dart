@@ -35,7 +35,6 @@ class WebApp extends StatelessWidget {
   final FlutterLocalNotificationsPlugin _localNotifications =
       new FlutterLocalNotificationsPlugin();
   final Completer<Map> _config = Completer<Map>();
-  final Completer<String> _fcmToken = Completer<String>();
 
   @override
   Widget build(BuildContext context) {
@@ -118,19 +117,14 @@ class WebApp extends StatelessWidget {
       },
     );
 
-    // Listen for FCM token updates
-    Stream<String> fcmStream = _firebaseMessaging.onTokenRefresh;
-    fcmStream.listen((token) {
-      print('Got FCM token $token');
-      _fcmToken.complete(token);
-      _invokeFcmTokenCallback();
-    });
-
     // Optionally subscribe to a FCM topic
     final fcmTopic = config['fcm_topic'];
     if (fcmTopic != null) {
       _firebaseMessaging.subscribeToTopic(fcmTopic);
     }
+
+    // Listen for token updates
+    _firebaseMessaging.onTokenRefresh.listen(_handleFcmToken);
 
     // Setup local notifications
     var initializationSettings = new InitializationSettings(
@@ -144,7 +138,13 @@ class WebApp extends StatelessWidget {
     });
   }
 
+  void _handleFcmToken(token) {
+    print('Got FCM token $token');
+    _invokeJavascriptCallback('onFcmToken', token);
+  }
+
   void _handleRemoteMessage(msg, showNotification) {
+    print('Got remote message $msg');
     if (!msg.containsKey('notification') ||
         !msg.containsKey('data') ||
         !msg['notification'].containsKey('title') ||
@@ -180,7 +180,9 @@ class WebApp extends StatelessWidget {
         onMessageReceived: (JavascriptMessage message) {
           switch (message.message) {
             case 'fcmToken':
-              _invokeFcmTokenCallback();
+              _firebaseMessaging.getToken().then((token) {
+                _invokeJavascriptCallback('onFcmToken', token);
+              });
               break;
             case 'scanBarcode':
               _scanBarcode();
@@ -196,12 +198,6 @@ class WebApp extends StatelessWidget {
     } on Exception catch (e) {
       _invokeJavascriptCallback('onBarcodeError', e.toString());
     }
-  }
-
-  void _invokeFcmTokenCallback() {
-    _fcmToken.future.then((token) {
-      _invokeJavascriptCallback('onFcmToken', token);
-    });
   }
 
   void _invokeJavascriptCallback(function, arg) {
