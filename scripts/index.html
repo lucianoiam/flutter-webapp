@@ -46,7 +46,7 @@
 
     (function init() {
       document.getElementById('test-token').addEventListener('click', function (e) {
-        Native.postMessage('fcmToken');
+        FlutterHost.postMessage('fcmToken');
       });
 
       document.getElementById('test-geo').addEventListener('click', function (e) {
@@ -58,7 +58,7 @@
       });
 
       document.getElementById('test-barcode').addEventListener('click', function (e) {
-        Native.postMessage('scanBarcode');
+        FlutterHost.postMessage('scanBarcode');
       });
 
       document.getElementById('test-content').addEventListener('click', function (e) {

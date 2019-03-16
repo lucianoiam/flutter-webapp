@@ -176,7 +176,7 @@ class WebApp extends StatelessWidget {
 
   JavascriptChannel _nativeJavascriptChannel(BuildContext context) {
     return JavascriptChannel(
-        name: 'Native',
+        name: 'FlutterHost',
         onMessageReceived: (JavascriptMessage message) {
           switch (message.message) {
             case 'fcmToken':
