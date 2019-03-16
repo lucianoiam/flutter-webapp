@@ -1,9 +1,9 @@
 {
-	"apiKey": "AAAAZ92cYNk:APA91bHgrdrLqHJwA_iCJr87Zu0627qncltzKqvb7SEgdbt-bPYyl2aSN9xISbL3gMH1oZWVojCK-5vGybNNgveOixDbmtGKG3e0abuUjHKB8qmt05tG67xcJuai7Ufi7p-h-rc3YSCO",
+	"apiKey": "",
 	"topic": "main",
 	"notification": {
-		"title": "Título de prueba",
-		"body": "Detalle de la notificación. Entrá para más información",
+		"title": "Test title",
+		"body": "Notification body. Touch for more.",
 		"url": "https://wordpress.org/about/"
 	}
 }

@@ -22,12 +22,12 @@ $notification = [
    'notification' => [
       'title'  => $n->notification->title,
       'body'   => $n->notification->body,
-      'icon'   => 'ic_notification',   // no tocar
-      'sound'  => 'default'   // no tocar
+      'icon'   => 'ic_notification',   // no dot remove
+      'sound'  => 'default'   // no not remove
    ],
    'data'   => [
       'url'          => $n->notification->url,
-		'click_action' => 'FLUTTER_NOTIFICATION_CLICK' // no tocar
+		'click_action' => 'FLUTTER_NOTIFICATION_CLICK' // no not remove
    ]
 ];
 

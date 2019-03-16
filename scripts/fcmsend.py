@@ -25,11 +25,11 @@ result = FCMNotification(api_key=N['apiKey']).notify_single_device(
 	registration_id=N['registrationId'],
 	message_title=N['notification']['title'],
 	message_body=N['notification']['body'],
-	message_icon='ic_notification', # dejar para Android
-	sound='default', # dejar para iOS
+	message_icon='ic_notification', # needed for Android
+	sound='default', # needed for iOS
 	data_message={
 		'url': N['notification']['url'],
-		'click_action': 'FLUTTER_NOTIFICATION_CLICK' # dejar
+		'click_action': 'FLUTTER_NOTIFICATION_CLICK' # no not remove
 	},
 )
  
