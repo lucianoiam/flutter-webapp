@@ -67,10 +67,21 @@ class WebApp extends StatelessWidget {
             }
           }
 
-          // Setup notifications
+          // Setup remote notifications
           if (config['notifications']) {
-            _enableNotifications(config);
+            _enableRemoteNotifications(config);
           }
+
+          // Setup local notifications
+          var initializationSettings = new InitializationSettings(
+              new AndroidInitializationSettings('ic_notification'),
+              new IOSInitializationSettings());
+          _localNotifications.initialize(initializationSettings,
+              onSelectNotification: (url) {
+            if (url != null) {
+              _webviewPlugin.launch(url);
+            }
+          });
 
           // Trigger native geolocation permission request if needed
           if (config['geolocation']) {
@@ -99,7 +110,7 @@ class WebApp extends StatelessWidget {
         });
   }
 
-  void _enableNotifications(config) {
+  void _enableRemoteNotifications(config) {
     // Request notifications permission on iOS
     _firebaseMessaging.requestNotificationPermissions();
 
@@ -127,15 +138,6 @@ class WebApp extends StatelessWidget {
 
     // Listen for token updates
     _firebaseMessaging.onTokenRefresh.listen(_handleFcmToken);
-
-    // Setup local notifications
-    var initializationSettings = new InitializationSettings(
-        new AndroidInitializationSettings('ic_notification'),
-        new IOSInitializationSettings());
-    _localNotifications.initialize(initializationSettings,
-        onSelectNotification: (url) {
-      _webviewPlugin.launch(url);
-    });
   }
 
   void _handleFcmToken(token) {
