@@ -4,9 +4,10 @@ An incredibly quick way to setup a webapp targeting iOS and Android using Flutte
 
 ### Features
 
-- Firebase push notifications
+- Firebase remote notifications
+- Scheduled local notifications
 - QR and barcodes scanner
-- HTML5 Geolocation on both platforms
+- HTML5 geolocation on both platforms
 - Currently only supports remotely hosted content
 
 ### How to use
