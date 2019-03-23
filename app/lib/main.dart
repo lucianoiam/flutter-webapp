@@ -15,6 +15,7 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
@@ -51,7 +52,9 @@ class WebApp extends StatelessWidget {
           final config = loadYaml(snapshot.data);
           final initialUrl = config['url'];
           final title = config['title'];
-          _config.complete(config);
+          if (!_config.isCompleted) {
+            _config.complete(config);
+          }
 
           // Setup app bar
           var appBar, themeData;
@@ -169,16 +172,48 @@ class WebApp extends StatelessWidget {
   // Expose native features to JavaScript code
 
   void _onJavascriptMessage(String message) {
-    switch (message) {
-      case 'fcmToken':
-        _firebaseMessaging.getToken().then((token) {
-          _invokeJavascriptCallback('onFcmToken', token);
-        });
-        break;
-      case 'scanBarcode':
-        _scanBarcode();
-        break;
-    }
+    _webviewPlugin.evalJavascript('_messageArgs').then((jsonArgs) {
+      _webviewPlugin.evalJavascript('_messageArgs = {};');
+      var args;
+      try {
+        args = json.decode(jsonArgs);
+      } on FormatException catch (e) {
+        args = {};
+      }
+      switch (message) {
+        case 'scheduleNotification':
+          _scheduleLocalNotification(args['id'], args['title'], args['body'],
+              DateTime.parse(args['date']));
+          break;
+        case 'unscheduleNotification':
+          _unscheduleLocalNotification(args['id']);
+          break;
+        case 'fcmToken':
+          _firebaseMessaging.getToken().then((token) {
+            _invokeJavascriptCallback('onFcmToken', token);
+          });
+          break;
+        case 'scanBarcode':
+          _scanBarcode();
+          break;
+      }
+    });
+  }
+
+  void _scheduleLocalNotification(id, title, body, date) {
+    _config.future.then((config) {
+      final androidDetails = new AndroidNotificationDetails(
+          'main', config['title'], '',
+          importance: Importance.Max, priority: Priority.High);
+      NotificationDetails platformChannelSpecifics =
+          new NotificationDetails(androidDetails, IOSNotificationDetails());
+      _localNotifications.schedule(
+          id, title, body, date, platformChannelSpecifics);
+    });
+  }
+
+  void _unscheduleLocalNotification(id) {
+    _localNotifications.cancel(id);
   }
 
   void _scanBarcode() async {

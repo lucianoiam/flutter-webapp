@@ -1,15 +1,24 @@
 <html>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta charset="utf-8">
-<title>Flutter webapp test</title>
-<style>
-  body {
-    font-family: sans-serif;
-    font-size: 20px;
-  }
-</style>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <title>Flutter webapp test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 20px;
+    }
+  </style>
+</head>
 
 <body>
+  <p>
+    <a href='#' id='test-local-notif-schedule'>Schedule a local notification</a>
+  </p>
+  <p>
+    <a href='#' id='test-local-notif-unschedule'>Unschedule local notification</a>
+  </p>
   <p>
     <a href='#' id='test-token'>Show FCM token</a>
   </p>
@@ -23,16 +32,9 @@
     <a href='#' id='test-content'>Google search</a>
   </p>
   <pre id='debug-output'></pre>
+  <script src="flutter-host.js"></script>
   <script>
     var debugOutput = document.getElementById('debug-output');
-    
-    if (typeof window.FlutterHost !== 'object') {
-      window.FlutterHost = {
-        postMessage: function(message) {
-          window.location.hash = 'flutterHost_' + message;
-        }
-      };
-    }
 
     // Firebase messaging token callback
 
@@ -53,6 +55,21 @@
     // Example implementation
 
     (function init() {
+      document.getElementById('test-local-notif-schedule').addEventListener('click', function (e) {
+        var date = new Date();
+        date.setSeconds(date.getSeconds() + 5);
+        FlutterHost.postMessageWithArgs('scheduleNotification', {
+          id: 1234,
+          title: 'Notification title',
+          body: 'Notification body',
+          date: date
+        });
+      });
+
+      document.getElementById('test-local-notif-unschedule').addEventListener('click', function (e) {
+        FlutterHost.postMessageWithArgs('unscheduleNotification', { id: 1234 });
+      });
+
       document.getElementById('test-token').addEventListener('click', function (e) {
         FlutterHost.postMessage('fcmToken');
       });
