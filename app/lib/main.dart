@@ -16,6 +16,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
@@ -173,9 +174,14 @@ class WebApp extends StatelessWidget {
 
   void _onJavascriptMessage(String message) {
     _webviewPlugin.evalJavascript('_messageArgs').then((jsonArgs) {
-      _webviewPlugin.evalJavascript('_messageArgs = {};');
+      _webviewPlugin.evalJavascript('_messageArgs = "{}";');
       var args;
       try {
+        if (Platform.isAndroid) {
+          // flutter_webview_plugin bug?
+          jsonArgs = jsonArgs.replaceAll(new RegExp(r'\\\"'), "\"");
+          jsonArgs = jsonArgs.substring(1, jsonArgs.length - 1);
+        }
         args = json.decode(jsonArgs);
       } on FormatException catch (e) {
         args = {};

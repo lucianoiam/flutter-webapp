@@ -27,6 +27,7 @@
 
 	// Add support to include arguments in messages
 	FlutterHost.postMessageWithArgs = function (message, args) {
+		// stringify guarantees proper Date() serialization
 		window._messageArgs = JSON.stringify(args);
 		FlutterHost.postMessage(message);
 	};
