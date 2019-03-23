@@ -20,13 +20,16 @@ dependencies:
   barcode_scan: ^1.0.0
   firebase_messaging: ^4.0.0+1
   flutter_local_notifications: ^0.5.2
-  # WebView lacks geolocation support on Android, use patched version
+  flutter_webview_plugin: ^0.3.1
+
+  # Google's official webview support (see main_google_webview.dart)
+  # - Lacks geolocation support on Android, use forked version
+  # - Keyboard input broken on Android, no solution as of 23.03.19
   #webview_flutter: ^0.3.4
   webview_flutter:
     git:
       url: https://github.com/iamluciano/plugins.git
       path: packages/webview_flutter
-    #path: ../../flutter-plugins/packages/webview_flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -25,6 +25,14 @@
   <pre id='debug-output'></pre>
   <script>
     var debugOutput = document.getElementById('debug-output');
+    
+    if (typeof window.FlutterHost !== 'object') {
+      window.FlutterHost = {
+        postMessage: function(message) {
+          window.location.hash = 'flutterHost_' + message;
+        }
+      };
+    }
 
     // Firebase messaging token callback
 

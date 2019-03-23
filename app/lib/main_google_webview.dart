@@ -16,7 +16,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -24,13 +24,13 @@ import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'hex_color.dart';
 
-void main() => runApp(WebApp());
+//void main() => runApp(WebApp());
 
 class WebApp extends StatelessWidget {
   static const String CONFIG = 'assets/config.yaml';
-  static const String MESSAGE_PREFIX = 'flutterHost';
 
-  final FlutterWebviewPlugin _webviewPlugin = new FlutterWebviewPlugin();
+  final Completer<WebViewController> _controller =
+      Completer<WebViewController>();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final FlutterLocalNotificationsPlugin _localNotifications =
       new FlutterLocalNotificationsPlugin();
@@ -74,24 +74,26 @@ class WebApp extends StatelessWidget {
                 .getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
           }
 
-          // Setup js->flutter bridge
-          _webviewPlugin.onUrlChanged.listen((String url) {
-            String fragment = Uri.parse(url).fragment;
-            if (fragment.startsWith(MESSAGE_PREFIX)) {
-              String message = fragment.substring(MESSAGE_PREFIX.length + 1);
-              _onJavascriptMessage(message);
-            }
-          });
-
           // Build application
           return MaterialApp(
               title: title,
               theme: themeData,
-              home: WebviewScaffold(
-                url: initialUrl,
-                geolocationEnabled: true,
-                appBar: appBar,
-              ));
+              home: Scaffold(
+                  appBar: appBar,
+                  // We're using a Builder here so we have a context that is below the Scaffold
+                  // to allow calling Scaffold.of(context) so we can show a snackbar.
+                  body: Builder(builder: (BuildContext context) {
+                    return WebView(
+                      initialUrl: initialUrl,
+                      javascriptMode: JavascriptMode.unrestricted,
+                      onWebViewCreated: (WebViewController webViewController) {
+                        _controller.complete(webViewController);
+                      },
+                      javascriptChannels: <JavascriptChannel>[
+                        _nativeJavascriptChannel(context),
+                      ].toSet(),
+                    );
+                  })));
         });
   }
 
@@ -130,7 +132,9 @@ class WebApp extends StatelessWidget {
         new IOSInitializationSettings());
     _localNotifications.initialize(initializationSettings,
         onSelectNotification: (url) {
-      _webviewPlugin.launch(url);
+      _controller.future.then((controller) {
+        controller.loadUrl(url);
+      });
     });
   }
 
@@ -162,23 +166,29 @@ class WebApp extends StatelessWidget {
             payload: url);
       });
     } else {
-      _webviewPlugin.launch(url);
+      _controller.future.then((controller) {
+        controller.loadUrl(url);
+      });
     }
   }
 
   // Expose native features to JavaScript code
 
-  void _onJavascriptMessage(String message) {
-    switch (message) {
-      case 'fcmToken':
-        _firebaseMessaging.getToken().then((token) {
-          _invokeJavascriptCallback('onFcmToken', token);
+  JavascriptChannel _nativeJavascriptChannel(BuildContext context) {
+    return JavascriptChannel(
+        name: 'FlutterHost',
+        onMessageReceived: (JavascriptMessage message) {
+          switch (message.message) {
+            case 'fcmToken':
+              _firebaseMessaging.getToken().then((token) {
+                _invokeJavascriptCallback('onFcmToken', token);
+              });
+              break;
+            case 'scanBarcode':
+              _scanBarcode();
+              break;
+          }
         });
-        break;
-      case 'scanBarcode':
-        _scanBarcode();
-        break;
-    }
   }
 
   void _scanBarcode() async {
@@ -191,7 +201,9 @@ class WebApp extends StatelessWidget {
   }
 
   void _invokeJavascriptCallback(function, arg) {
-    String js = 'if (typeof $function === "function") $function("$arg")';
-    _webviewPlugin.evalJavascript(js);
+    _controller.future.then((controller) {
+      String js = 'if (typeof $function === "function") $function("$arg")';
+      controller.evaluateJavascript(js);
+    });
   }
 }
