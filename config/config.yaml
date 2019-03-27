@@ -1,8 +1,1 @@
-url: https://storage.googleapis.com/flutter-web-app.appspot.com/example.html
-title: Webapp example
-geolocation: true
-notifications: true
-fcm_topic: main
-app_bar:
-  visible: true
-  color: 7e57c2
+../app/assets/config.yaml
