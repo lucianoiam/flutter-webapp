@@ -79,7 +79,7 @@ class WebApp extends StatelessWidget {
           _localNotifications.initialize(initializationSettings,
               onSelectNotification: (url) {
             if (url != null) {
-              _webviewPlugin.launch(url);
+              _webviewPlugin.reloadUrl(url);
             }
           });
 
@@ -168,7 +168,7 @@ class WebApp extends StatelessWidget {
             payload: url);
       });
     } else {
-      _webviewPlugin.launch(url);
+      _webviewPlugin.reloadUrl(url);
     }
   }
 
