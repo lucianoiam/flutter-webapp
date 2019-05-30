@@ -17,6 +17,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
@@ -38,6 +39,8 @@ class WebApp extends StatelessWidget {
       new FlutterLocalNotificationsPlugin();
   final Completer<Map> _config = Completer<Map>();
 
+  String _initialUrl, _displayedUrl;
+
   @override
   Widget build(BuildContext context) {
     // Load configuration
@@ -51,7 +54,7 @@ class WebApp extends StatelessWidget {
 
           // Parse configuration
           final config = loadYaml(snapshot.data);
-          final initialUrl = config['url'];
+          _initialUrl = config['url'];
           final title = config['title'];
           if (!_config.isCompleted) {
             _config.complete(config);
@@ -91,6 +94,7 @@ class WebApp extends StatelessWidget {
 
           // Setup js->flutter bridge
           _webviewPlugin.onUrlChanged.listen((String url) {
+            _displayedUrl = url;
             String fragment = Uri.parse(url).fragment;
             if (fragment.startsWith(MESSAGE_PREFIX)) {
               String message = fragment.substring(MESSAGE_PREFIX.length + 1);
@@ -98,12 +102,19 @@ class WebApp extends StatelessWidget {
             }
           });
 
+          // Android: make sure app exits when there is no web history left and user pressed back
+         _webviewPlugin.onBack.listen((_) {
+           if (_displayedUrl == _initialUrl) {
+            SystemNavigator.pop();
+           }
+         });
+
           // Build application
           return MaterialApp(
               title: title,
               theme: themeData,
               home: WebviewScaffold(
-                url: initialUrl,
+                url: _initialUrl,
                 geolocationEnabled: true,
                 appBar: appBar,
               ));
@@ -168,7 +179,7 @@ class WebApp extends StatelessWidget {
             payload: url);
       });
     } else {
-      _webviewPlugin.reloadUrl(url);
+      _webviewPlugin.launch(url);
     }
   }
 
