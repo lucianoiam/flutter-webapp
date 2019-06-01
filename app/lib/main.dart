@@ -61,12 +61,17 @@ class WebApp extends StatelessWidget {
           }
 
           // Setup app bar
-          var appBar, themeData;
-          if (config['app_bar'] != null && config['app_bar']['visible']) {
-            appBar = AppBar(title: Text(title));
-            final color = config['app_bar']['color'];
-            if (color != null) {
-              themeData = ThemeData(primaryColor: HexColor(color));
+          Widget appBar = PlaceholderAppBar(Color.fromARGB(1, 1, 1, 1));
+          ThemeData themeData = ThemeData();
+          if (config['app_bar'] != null) {
+            if (config['app_bar']['visible']) {
+              appBar = AppBar(title: Text(title));
+            }
+            final hexColor = config['app_bar']['color'];
+            if (hexColor != null) {
+              final color = HexColor(hexColor);
+              themeData = ThemeData(primaryColor: color);
+              appBar = PlaceholderAppBar(color);
             }
           }
 
@@ -113,11 +118,16 @@ class WebApp extends StatelessWidget {
           return MaterialApp(
               title: title,
               theme: themeData,
-              home: WebviewScaffold(
-                url: _initialUrl,
-                geolocationEnabled: true,
+              home: Scaffold(
+                primary: true,
                 appBar: appBar,
-              ));
+                body: WebviewScaffold(
+                  url: _initialUrl,
+                  primary: true,
+                  geolocationEnabled: true,
+              )
+            )  
+          );
         });
   }
 
@@ -248,4 +258,18 @@ class WebApp extends StatelessWidget {
     String js = 'if (typeof $function === "function") $function("$arg")';
     _webviewPlugin.evalJavascript(js);
   }
+}
+
+class PlaceholderAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final Color color;
+  
+  PlaceholderAppBar(this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(color: color);
+  }
+  
+  @override
+  Size get preferredSize => Size(0.0,0.0);
 }
