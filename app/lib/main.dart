@@ -157,7 +157,7 @@ class WebApp extends StatelessWidget {
       _firebaseMessaging.subscribeToTopic(fcmTopic);
     }
 
-    // Listen for token updates
+    // Listen for token updates, will also trigger callback now
     _firebaseMessaging.onTokenRefresh.listen(_handleFcmToken);
   }
 
