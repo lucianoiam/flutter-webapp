@@ -25,6 +25,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:share/share.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
@@ -224,6 +225,9 @@ class WebApp extends StatelessWidget {
           break;
         case 'scanBarcode':
           _scanBarcode();
+          break;
+        case 'share':
+          Share.share(args['message']);
           break;
       }
     });

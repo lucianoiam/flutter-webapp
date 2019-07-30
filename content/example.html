@@ -29,6 +29,9 @@
     <a href='#' id='test-barcode'>QR scan test</a>
   </p>
   <p>
+    <a href='#' id='test-share'>Share test</a>
+  </p>
+  <p>
     <a href='#' id='test-content'>Google search</a>
   </p>
   <pre id='debug-output'></pre>
@@ -67,7 +70,7 @@
       });
 
       document.getElementById('test-local-notif-unschedule').addEventListener('click', function (e) {
-        FlutterHost.postMessageWithArgs('unscheduleNotification', { id: 1234 });
+        FlutterHost.postMessageWithArgs('unscheduleNotification', {id: 1234});
       });
 
       document.getElementById('test-token').addEventListener('click', function (e) {
@@ -84,6 +87,10 @@
 
       document.getElementById('test-barcode').addEventListener('click', function (e) {
         FlutterHost.postMessage('scanBarcode');
+      });
+      
+      document.getElementById('test-share').addEventListener('click', function (e) {
+        FlutterHost.postMessageWithArgs('share', {message: 'Find us on Google https://www.google.com'});
       });
 
       document.getElementById('test-content').addEventListener('click', function (e) {

@@ -1,4 +1,4 @@
-url: https://storage.googleapis.com/flutter-web-app.appspot.com/example.html
+url: https://storage.googleapis.com/flutter-web-app.appspot.com/example.html?v=2
 title: Webapp example
 geolocation: true
 notifications: true
