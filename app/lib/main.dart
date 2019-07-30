@@ -22,10 +22,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:yaml/yaml.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:share/share.dart';
+import 'package:barcode_scan/barcode_scan.dart';
 import 'hex_color.dart';
 
 void main() => runApp(WebApp());
@@ -34,13 +34,13 @@ class WebApp extends StatelessWidget {
   static const String CONFIG = 'assets/config.yaml';
   static const String MESSAGE_PREFIX = 'flutterHost';
 
+  final Completer<Map> _config = Completer<Map>();
   final FlutterWebviewPlugin _webviewPlugin = new FlutterWebviewPlugin();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final FlutterLocalNotificationsPlugin _localNotifications =
       new FlutterLocalNotificationsPlugin();
-  final Completer<Map> _config = Completer<Map>();
-
-  String _initialUrl, _displayedUrl;
+  final StringBuffer _initialUrl = StringBuffer();
+  final StringBuffer _displayedUrl = StringBuffer();
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class WebApp extends StatelessWidget {
 
           // Parse configuration
           final config = loadYaml(snapshot.data);
-          _initialUrl = config['url'];
+          _initialUrl.write(config['url']);
           final title = config['title'];
           if (!_config.isCompleted) {
             _config.complete(config);
@@ -90,6 +90,7 @@ class WebApp extends StatelessWidget {
             if (url != null) {
               _webviewPlugin.reloadUrl(url);
             }
+            return;
           });
 
           // Trigger native geolocation permission request if needed
@@ -100,7 +101,8 @@ class WebApp extends StatelessWidget {
 
           // Setup js->flutter bridge
           _webviewPlugin.onUrlChanged.listen((String url) {
-            _displayedUrl = url;
+            _displayedUrl.clear();
+            _displayedUrl.write(url);
             String fragment = Uri.parse(url).fragment;
             if (fragment.startsWith(MESSAGE_PREFIX)) {
               String message = fragment.substring(MESSAGE_PREFIX.length + 1);
@@ -110,7 +112,7 @@ class WebApp extends StatelessWidget {
 
           // Android: make sure app exits when there is no web history left and user pressed back
          _webviewPlugin.onBack.listen((_) {
-           if (_displayedUrl == _initialUrl) {
+           if (_displayedUrl.toString() == _initialUrl.toString()) {
             SystemNavigator.pop();
            }
          });
@@ -123,7 +125,7 @@ class WebApp extends StatelessWidget {
                 primary: true,
                 appBar: appBar,
                 body: WebviewScaffold(
-                  url: _initialUrl,
+                  url: _initialUrl.toString(),
                   primary: true,
                   geolocationEnabled: true,
               )
@@ -141,14 +143,17 @@ class WebApp extends StatelessWidget {
       onMessage: (Map<String, dynamic> msg) {
         print('Got FCM message in foreground ${(msg)}');
         _handleRemoteMessage(msg, true);
+        return;
       },
       onLaunch: (Map<String, dynamic> msg) {
         print('Pending FCM message on launch ${(msg)}');
         _handleRemoteMessage(msg, false);
+        return;
       },
       onResume: (Map<String, dynamic> msg) {
         print('Pending FCM message on resume ${(msg)}');
         _handleRemoteMessage(msg, false);
+        return;
       },
     );
 
@@ -207,7 +212,7 @@ class WebApp extends StatelessWidget {
           jsonArgs = jsonArgs.substring(1, jsonArgs.length - 1);
         }
         args = json.decode(jsonArgs);
-      } on FormatException catch (e) {
+      } catch (FormatException) {
         args = {};
       }
       switch (message) {
@@ -223,11 +228,11 @@ class WebApp extends StatelessWidget {
             _invokeJavascriptCallback('onFcmToken', token);
           });
           break;
+        case 'share':
+          _share(args['message']);
+          break;
         case 'scanBarcode':
           _scanBarcode();
-          break;
-        case 'share':
-          Share.share(args['message']);
           break;
       }
     });
@@ -247,6 +252,10 @@ class WebApp extends StatelessWidget {
 
   void _unscheduleLocalNotification(id) {
     _localNotifications.cancel(id);
+  }
+
+  void _share(message) {
+    Share.share(message);
   }
 
   void _scanBarcode() async {
