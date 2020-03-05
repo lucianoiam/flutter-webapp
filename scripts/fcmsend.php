@@ -26,8 +26,10 @@ $notification = [
       'sound'  => 'default'   // no not remove
    ],
    'data'   => [
-      'url'          => $n->notification->url,
-		'click_action' => 'FLUTTER_NOTIFICATION_CLICK' // no not remove
+      'title'  => $n->notification->title,
+      'body'   => $n->notification->body,
+      'url'    => $n->notification->url,
+      'click_action' => 'FLUTTER_NOTIFICATION_CLICK' // no not remove
    ]
 ];
 
