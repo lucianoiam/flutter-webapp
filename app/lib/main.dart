@@ -177,15 +177,35 @@ class WebApp extends StatelessWidget {
 
   void _handleRemoteMessage(msg, showNotification) {
     print('Got remote message $msg');
-    if (!msg.containsKey('notification') ||
-        !msg.containsKey('data') ||
-        !msg['notification'].containsKey('title') ||
-        !msg['notification'].containsKey('body') ||
-        !msg['data'].containsKey('url')) {
+    if (!msg.containsKey('notification') || !msg.containsKey('data')) {
       print('Malformed remote message');
       return;
     }
-    final url = msg['data']['url'];
+    final notification = msg['notification'];
+    final data = msg['data'];
+    String title;
+    if (notification.containsKey('title')) {
+      title = notification['title'];
+    } else if (data.containsKey('title')) {
+      title = data['title'];
+    } else {
+      print('Missing title from remote message');
+      return;
+    }
+    String body;
+    if (notification.containsKey('body')) {
+      body = notification['body'];
+    } else if (data.containsKey('body')) {
+      body = data['body'];
+    } else {
+      print('Missing body from remote message');
+      return;
+    }
+    if (!data.containsKey('url')) {
+      print('Missing url from remote message');
+      return;
+    }
+    final url = data['url'];
     if (showNotification) {
       _config.future.then((config) {
         var androidDetails = new AndroidNotificationDetails(
@@ -193,9 +213,7 @@ class WebApp extends StatelessWidget {
             importance: Importance.Max, priority: Priority.High);
         var platformChannelSpecifics = new NotificationDetails(
             androidDetails, new IOSNotificationDetails());
-        _localNotifications.show(0, msg['notification']['title'],
-            msg['notification']['body'], platformChannelSpecifics,
-            payload: url);
+        _localNotifications.show(0, title, body, platformChannelSpecifics, payload: url);
       });
     } else {
       _webviewPlugin.launch(url);
