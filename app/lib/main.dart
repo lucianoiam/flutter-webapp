@@ -28,7 +28,10 @@ import 'package:share/share.dart';
 import 'package:barcode_scan/barcode_scan.dart';
 import 'hex_color.dart';
 
-void main() => runApp(WebApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(WebApp());
+}
 
 class WebApp extends StatelessWidget {
   static const String CONFIG = 'assets/config.yaml';
