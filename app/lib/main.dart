@@ -216,7 +216,7 @@ class WebApp extends StatelessWidget {
         _localNotifications.show(0, title, body, platformChannelSpecifics, payload: url);
       });
     } else {
-      _webviewPlugin.launch(url);
+      _webviewPlugin.reloadUrl(url);
     }
   }
 
