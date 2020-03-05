@@ -1,6 +1,6 @@
 # flutter-webapp
 
-An incredibly quick way to setup a webapp targeting iOS and Android using Flutter
+A quick way to setup a webapp targeting iOS and Android using Flutter
 
 ### Features
 
