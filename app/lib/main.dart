@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Luciano Iam <lucianito@gmail.com>
+ * Copyright 2019 lucianoiam <lucianito@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,7 @@ class WebApp extends StatelessWidget {
 
           // Trigger native geolocation permission request if needed
           if (config['geolocation']) {
-            Geolocator()
-                .getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+            getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
           }
 
           // Setup js->flutter bridge
@@ -281,7 +280,7 @@ class WebApp extends StatelessWidget {
 
   void _scanBarcode() async {
     try {
-      String barcode = await BarcodeScanner.scan();
+      String barcode = (await BarcodeScanner.scan()).rawContent;
       _invokeJavascriptCallback('onBarcodeData', barcode);
     } on Exception catch (e) {
       _invokeJavascriptCallback('onBarcodeError', e.toString());
