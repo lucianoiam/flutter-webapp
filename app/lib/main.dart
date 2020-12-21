@@ -120,6 +120,7 @@ class WebApp extends StatelessWidget {
          });
 
           // Build application
+          // https://github.com/fluttercommunity/flutter_webview_plugin/issues/386
           return MaterialApp(
               title: title,
               theme: themeData,
@@ -130,6 +131,7 @@ class WebApp extends StatelessWidget {
                   url: _initialUrl.toString(),
                   primary: true,
                   geolocationEnabled: true,
+                  initialChild: Container()
               )
             )  
           );

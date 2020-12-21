@@ -31,7 +31,7 @@ dependencies:
   #webview_flutter: ^0.3.4
   #webview_flutter:
   #  git:
-  #    url: https://github.com/iamluciano/plugins.git
+  #    url: https://github.com/lucianoiam/plugins.git
   #    path: packages/webview_flutter
   #  path: ../../flutter-plugins/packages/webview_flutter
   
